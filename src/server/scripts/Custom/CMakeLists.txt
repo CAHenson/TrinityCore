@@ -13,7 +13,10 @@
 set(scripts_STAT_SRCS
   ${scripts_STAT_SRCS}
 #  ${sources_Custom}
-Custom/WorldChat.cpp
+	Custom/WorldChat.cpp
+    Custom/Transmog/Transmogrification.h
+    Custom/Transmog/Transmogrification.cpp
+    Custom/Transmog/Transmogrifier.cpp
 )
 
 message("  -> Prepared: Custom")
