@@ -2564,19 +2564,15 @@ void Player::Regenerate(Powers power)
 
     switch (power)
     {
-        case POWER_MANA:
-        {
-            bool recentCast = IsUnderLastManaUseEffect();
-            float ManaIncreaseRate = sWorld->getRate(RATE_POWER_MANA);
+		case POWER_MANA:
+		{
+			float ManaIncreaseRate = sWorld->getRate(RATE_POWER_MANA);
 
-            //if (getLevel() < 15)
-            ManaIncreaseRate = sWorld->getRate(RATE_POWER_MANA) * (2.066f - (getLevel() * 0.066f));
-
-            if (recentCast) // Trinity Updates Mana in intervals of 2s, which is correct
-                addvalue += GetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER) *  ManaIncreaseRate * 0.001f * m_regenTimer;
-            else
-                addvalue += GetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER) * ManaIncreaseRate * 0.001f * m_regenTimer;
-        }   break;
+			if (IsInCombat()) // Trinity Updates Mana in intervals of 2s, which is correct
+				addvalue += GetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER) *  ManaIncreaseRate * 0.001f * m_regenTimer;
+			else
+				addvalue += GetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER) *  ManaIncreaseRate * 0.001f * m_regenTimer;
+		}   break;
         case POWER_RAGE:                                    // Regenerate rage
         {
             if (!IsInCombat() && !HasAuraType(SPELL_AURA_INTERRUPT_REGEN))
@@ -2677,7 +2673,7 @@ void Player::RegenerateHealth()
     float HealthIncreaseRate = sWorld->getRate(RATE_HEALTH);
 
     //if (getLevel() < 15)
-    HealthIncreaseRate = sWorld->getRate(RATE_HEALTH) * (2.066f - (getLevel() * 0.066f));
+    //HealthIncreaseRate = sWorld->getRate(RATE_HEALTH) * (2.066f - (getLevel() * 0.066f));
 
     float addValue = 0.0f;
 
@@ -2685,23 +2681,29 @@ void Player::RegenerateHealth()
     if (IsPolymorphed())
         addValue = float(GetMaxHealth()) / 3.0f;
     // normal regen case (maybe partly in combat case)
-    else if (!IsInCombat() || HasAuraType(SPELL_AURA_MOD_REGEN_DURING_COMBAT))
-    {
-        addValue = OCTRegenHPPerSpirit() * HealthIncreaseRate;
-        if (!IsInCombat())
-        {
-            AuraEffectList const& mModHealthRegenPct = GetAuraEffectsByType(SPELL_AURA_MOD_HEALTH_REGEN_PERCENT);
-            for (AuraEffectList::const_iterator i = mModHealthRegenPct.begin(); i != mModHealthRegenPct.end(); ++i)
-                AddPct(addValue, (*i)->GetAmount());
+	else if (!IsInCombat() || HasAuraType(SPELL_AURA_MOD_REGEN_DURING_COMBAT))
+	{
+		addValue = HealthIncreaseRate;
 
-            addValue += GetTotalAuraModifier(SPELL_AURA_MOD_REGEN) * 0.4f;
-        }
-        else if (HasAuraType(SPELL_AURA_MOD_REGEN_DURING_COMBAT))
-            ApplyPct(addValue, GetTotalAuraModifier(SPELL_AURA_MOD_REGEN_DURING_COMBAT));
+		if (!IsInCombat())
+		{
+			if (getLevel() < 15)
+				addValue = (0.20f * ((float)GetMaxHealth()) / getLevel() * HealthIncreaseRate);
+			else
+				addValue = 0.015f * ((float)GetMaxHealth()) * HealthIncreaseRate;
 
-        if (!IsStandState())
-            addValue *= 1.5f;
-    }
+			AuraEffectList const& mModHealthRegenPct = GetAuraEffectsByType(SPELL_AURA_MOD_HEALTH_REGEN_PERCENT);
+			for (AuraEffectList::const_iterator i = mModHealthRegenPct.begin(); i != mModHealthRegenPct.end(); ++i)
+				AddPct(addValue, (*i)->GetAmount());
+
+			addValue += GetTotalAuraModifier(SPELL_AURA_MOD_REGEN) * 0.4f;
+		}
+		else if (HasAuraType(SPELL_AURA_MOD_REGEN_DURING_COMBAT))
+			ApplyPct(addValue, GetTotalAuraModifier(SPELL_AURA_MOD_REGEN_DURING_COMBAT));
+
+		if (!IsStandState())
+			addValue *= 1.5f;
+	}
 
     // always regeneration bonus (including combat)
     addValue += GetTotalAuraModifier(SPELL_AURA_MOD_HEALTH_REGEN_IN_COMBAT);
@@ -2709,7 +2711,6 @@ void Player::RegenerateHealth()
 
     if (addValue < 0.0f)
         addValue = 0.0f;
-
 
     ModifyHealth(int32(addValue));
 }
