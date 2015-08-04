@@ -435,6 +435,8 @@ class npc_eye_of_acherus : public CreatureScript
                 }
             }
 
+		void AttackStart(Unit* /*who*/) override { }
+
         private:
             EventMap _events;
         };
@@ -482,8 +484,10 @@ public:
         {
             player->CLOSE_GOSSIP_MENU();
 
-            if (player->IsInCombat() || creature->IsInCombat())
-                return true;
+			if (player->IsInCombat() || creature->IsInCombat())
+				return true;
+			else
+				player->CombatStart(creature);
 
             if (npc_death_knight_initiateAI* pInitiateAI = CAST_AI(npc_death_knight_initiate::npc_death_knight_initiateAI, creature->AI()))
             {
@@ -584,6 +588,14 @@ public:
             }
         }
 
+	   void EnterCombat(Unit* /*who*/) override
+	   {
+		   events.ScheduleEvent(EVENT_ICY_TOUCH, 1000, GCD_CAST);
+		   events.ScheduleEvent(EVENT_PLAGUE_STRIKE, 3000, GCD_CAST);
+		   events.ScheduleEvent(EVENT_BLOOD_STRIKE, 2000, GCD_CAST);
+		   events.ScheduleEvent(EVENT_DEATH_COIL, 5000, GCD_CAST);
+	   }
+
         void UpdateAI(uint32 uiDiff) override
         {
             if (!UpdateVictim())
@@ -621,6 +633,32 @@ public:
             }
 
             /// @todo spells
+			while (uint32 eventId = events.ExecuteEvent())
+			{
+				switch (eventId)
+				{
+				case EVENT_ICY_TOUCH:
+					DoCastVictim(SPELL_ICY_TOUCH);
+					events.DelayEvents(1000, GCD_CAST);
+					events.ScheduleEvent(EVENT_ICY_TOUCH, 5000, GCD_CAST);
+					break;
+				case EVENT_PLAGUE_STRIKE:
+					DoCastVictim(SPELL_PLAGUE_STRIKE);
+					events.DelayEvents(1000, GCD_CAST);
+					events.ScheduleEvent(EVENT_PLAGUE_STRIKE, 5000, GCD_CAST);
+					break;
+				case EVENT_BLOOD_STRIKE:
+					DoCastVictim(SPELL_BLOOD_STRIKE);
+					events.DelayEvents(1000, GCD_CAST);
+					events.ScheduleEvent(EVENT_BLOOD_STRIKE, 5000, GCD_CAST);
+					break;
+				case EVENT_DEATH_COIL:
+					DoCastVictim(SPELL_DEATH_COIL);
+					events.DelayEvents(1000, GCD_CAST);
+					events.ScheduleEvent(EVENT_DEATH_COIL, 5000, GCD_CAST);
+					break;
+				}
+			}
 
             CombatAI::UpdateAI(uiDiff);
         }
