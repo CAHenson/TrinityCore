@@ -1420,6 +1420,7 @@ void AddBattlegroundScripts()
 void AddSC_cs_world_chat();
 void AddSC_PWS_Transmogrification();
 void AddSC_CS_Transmogrification();
+void AddSC_dk_skip_scripts();
 #endif
 
 void AddCustomScripts()
@@ -1429,5 +1430,6 @@ void AddCustomScripts()
 	AddSC_cs_world_chat();
     AddSC_PWS_Transmogrification();
     AddSC_CS_Transmogrification();
+	AddSC_dk_skip_scripts();
 #endif
 }
